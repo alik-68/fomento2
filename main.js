@@ -478,16 +478,7 @@ video3.muted = true;
 document.body.appendChild(video3);
 
 // set video 
-video3.src = 'videos/the future city-virtual tour animation.mp4'; // Ensure this path is correct
-
-
-// Add an event listener to check when the video is loaded
-video3.addEventListener('loadeddata', () => {
-    console.log("Video 3 is loaded and ready to play.");
-    video3.play().catch((error) => {
-        console.error("Error attempting to play the video:", error);
-    });
-});
+video3.src = './videos/airline-game.mp4';
 
 
 
@@ -498,7 +489,7 @@ video4.loop = true;
 video4.muted = true;
 document.body.appendChild(video4);
 
-video4.src = 'videos/fomento meno.mp4';
+video4.src = './videos/fomento-meno.mp4';
 
 
 video4.addEventListener('loadeddata', () => {
@@ -515,7 +506,7 @@ video4.loop = true;
 video4.muted = true;
 document.body.appendChild(video5);
 
-video5.src = 'videos/fomento expo.mp4';
+video5.src = './videos/fomento-expo.mp4';
 
 
 video5.addEventListener('loadeddata', () => {
