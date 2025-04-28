@@ -478,20 +478,7 @@ video3.muted = true;
 document.body.appendChild(video3);
 
 // set video 
-<<<<<<< HEAD
 video3.src = './videos/airline-game.mp4';
-=======
-video3.src = 'videos/airline-game.mp4'; // Ensure this path is correct
-
-
-// Add an event listener to check when the video is loaded
-video3.addEventListener('loadeddata', () => {
-    console.log("Video 3 is loaded and ready to play.");
-    video3.play().catch((error) => {
-        console.error("Error attempting to play the video:", error);
-    });
-});
->>>>>>> f71c5d42469afa853e4485195a390d9a227efe8b
 
 
 
@@ -502,11 +489,7 @@ video4.loop = true;
 video4.muted = true;
 document.body.appendChild(video4);
 
-<<<<<<< HEAD
-video4.src = './videos/fomento-meno.mp4';
-=======
-video4.src = 'videos/fomento-meno.mp4';
->>>>>>> f71c5d42469afa853e4485195a390d9a227efe8b
+video4.src = './videos/fomento-menu.mp4';
 
 
 video4.addEventListener('loadeddata', () => {
@@ -523,11 +506,7 @@ video4.loop = true;
 video4.muted = true;
 document.body.appendChild(video5);
 
-<<<<<<< HEAD
 video5.src = './videos/fomento-expo.mp4';
-=======
-video5.src = 'videos/fomento-expo.mp4';
->>>>>>> f71c5d42469afa853e4485195a390d9a227efe8b
 
 
 video5.addEventListener('loadeddata', () => {

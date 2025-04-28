@@ -18,14 +18,6 @@ export default defineConfig({
             input: {
                 main: './index.html'
             }
-<<<<<<< HEAD
-        },
-        copyPublicDir: true,
-    },
-    publicDir: 'public'
-});
-=======
         }
     }
 });
->>>>>>> f71c5d42469afa853e4485195a390d9a227efe8b
