@@ -900,17 +900,19 @@ function animate() {
 function render() {
     if (renderer.xr.isPresenting) {
         // VR Movement
+        const moveSpeed = vrSpeed * 0.01;
+        
         if (vrMoveForward) {
-            camera.position.z -= vrSpeed * 0.01;
+            camera.position.z -= moveSpeed;
         }
         if (vrMoveBackward) {
-            camera.position.z += vrSpeed * 0.01;
+            camera.position.z += moveSpeed;
         }
         if (vrMoveLeft) {
-            camera.position.x -= vrSpeed * 0.01;
+            camera.position.x -= moveSpeed;
         }
         if (vrMoveRight) {
-            camera.position.x += vrSpeed * 0.01;
+            camera.position.x += moveSpeed;
         }
     } else {
         if (controls.isLocked) {
@@ -1413,15 +1415,30 @@ controller2.addEventListener('squeezeend', () => {
     vrMoveBackward = false;
 });
 
-// Add thumbstick movement
+// Add thumbstick movement with proper joystick configuration
 controller1.addEventListener('thumbstickmoved', (event) => {
     const x = event.axes[0];
     const y = event.axes[1];
     
-    vrMoveLeft = x < -0.5;
-    vrMoveRight = x > 0.5;
-    vrMoveForward = y > 0.5;
-    vrMoveBackward = y < -0.5;
+    // Deadzone for joystick to prevent drift
+    const deadzone = 0.1;
+    
+    // Only register movement if joystick is moved beyond deadzone
+    if (Math.abs(x) > deadzone) {
+        vrMoveLeft = x < -0.5;
+        vrMoveRight = x > 0.5;
+    } else {
+        vrMoveLeft = false;
+        vrMoveRight = false;
+    }
+    
+    if (Math.abs(y) > deadzone) {
+        vrMoveForward = y > 0.5;
+        vrMoveBackward = y < -0.5;
+    } else {
+        vrMoveForward = false;
+        vrMoveBackward = false;
+    }
 });
 
 // Add trigger functionality for right controller
