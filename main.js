@@ -5,7 +5,7 @@ import { XRControllerModelFactory } from 'https://unpkg.com/three@0.162.0/exampl
 
 // Create scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Clor(0x666666); // Medium gray background
+scene.background = new THREE.Color(0x666666); // Medium gray background
 
 // Museum dimensions
 const MUSEUM = {
