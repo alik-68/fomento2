@@ -946,59 +946,47 @@ let vrMoveLeft = false;
 let vrMoveRight = false;
 const vrSpeed = 1;
 
-// Handle VR controller input
-controller1.addEventListener('squeezestart', () => {
-    console.log('Left controller squeeze start');
-    vrMoveForward = true;
-});
+// Function to check gamepad state
+function checkGamepad() {
+    if (renderer.xr.isPresenting) {
+        const session = renderer.xr.getSession();
+        if (session) {
+            const gamepads = session.inputSources;
+            for (const gamepad of gamepads) {
+                if (gamepad.gamepad) {
+                    const axes = gamepad.gamepad.axes;
+                    console.log('Gamepad axes:', axes);
+                    
+                    // Left controller (usually index 0)
+                    if (gamepad.handedness === 'left') {
+                        const x = axes[0];
+                        const y = axes[1];
+                        
+                        // Update movement state
+                        vrMoveLeft = x < -0.2;
+                        vrMoveRight = x > 0.2;
+                        vrMoveForward = y > 0.2;
+                        vrMoveBackward = y < -0.2;
+                        
+                        console.log('Left controller movement:', {
+                            x, y,
+                            left: vrMoveLeft,
+                            right: vrMoveRight,
+                            forward: vrMoveForward,
+                            backward: vrMoveBackward
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
 
-controller1.addEventListener('squeezeend', () => {
-    console.log('Left controller squeeze end');
-    vrMoveForward = false;
-});
-
-controller2.addEventListener('squeezestart', () => {
-    console.log('Right controller squeeze start');
-    vrMoveBackward = true;
-});
-
-controller2.addEventListener('squeezeend', () => {
-    console.log('Right controller squeeze end');
-    vrMoveBackward = false;
-});
-
-// Add thumbstick movement
-controller1.addEventListener('thumbstickmoved', (event) => {
-    console.log('Thumbstick moved:', event.axes);
-    const x = event.axes[0];
-    const y = event.axes[1];
-    
-    // Simple joystick movement
-    vrMoveLeft = x < -0.2;
-    vrMoveRight = x > 0.2;
-    vrMoveForward = y > 0.2;
-    vrMoveBackward = y < -0.2;
-    
-    console.log('Movement state:', {
-        left: vrMoveLeft,
-        right: vrMoveRight,
-        forward: vrMoveForward,
-        backward: vrMoveBackward
-    });
-});
-
-// Add controller connection debugging
-controller1.addEventListener('connected', (event) => {
-    console.log('Left controller connected:', event);
-});
-
-controller2.addEventListener('connected', (event) => {
-    console.log('Right controller connected:', event);
-});
-
-// Add VR session debugging
+// Add VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
+    // Start checking gamepad state
+    setInterval(checkGamepad, 100);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
