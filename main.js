@@ -963,29 +963,37 @@ controller2.addEventListener('squeezeend', () => {
     vrMoveBackward = false;
 });
 
-// Add thumbstick movement with debugging
-controller1.addEventListener('thumbstickmoved', (event) => {
-    console.log('Thumbstick moved:', event.axes);
-    const x = event.axes[0];
-    const y = event.axes[1];
-    
-    // More sensitive joystick movement
-    vrMoveLeft = x < -0.2;
-    vrMoveRight = x > 0.2;
-    vrMoveForward = y > 0.2;
-    vrMoveBackward = y < -0.2;
-    
-    console.log('Movement state:', {
-        left: vrMoveLeft,
-        right: vrMoveRight,
-        forward: vrMoveForward,
-        backward: vrMoveBackward
-    });
-});
+// Add thumbstick movement with direct gamepad input
+function updateGamepad() {
+    if (renderer.xr.isPresenting) {
+        const gamepad = controller1.gamepad;
+        if (gamepad) {
+            const x = gamepad.axes[0];
+            const y = gamepad.axes[1];
+            
+            console.log('Gamepad axes:', x, y);
+            
+            // Direct joystick movement
+            vrMoveLeft = x < -0.2;
+            vrMoveRight = x > 0.2;
+            vrMoveForward = y > 0.2;
+            vrMoveBackward = y < -0.2;
+            
+            console.log('Movement state:', {
+                left: vrMoveLeft,
+                right: vrMoveRight,
+                forward: vrMoveForward,
+                backward: vrMoveBackward
+            });
+        }
+    }
+}
 
 // Add controller connection debugging
 controller1.addEventListener('connected', (event) => {
     console.log('Left controller connected:', event);
+    // Start checking for gamepad input
+    setInterval(updateGamepad, 100);
 });
 
 controller2.addEventListener('connected', (event) => {
