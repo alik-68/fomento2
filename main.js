@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 
 // Create scene
 const scene = new THREE.Scene();
@@ -897,94 +898,110 @@ function animate() {
 }
 
 function render() {
-    if (controls.isLocked) {
-        // Calculate movement
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveRight) - Number(moveLeft);
-        direction.normalize();
-
-        // Apply movement with sprint multiplier
-        const currentSpeed = isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
-        
-        if (moveForward || moveBackward) velocity.z = direction.z * currentSpeed;
-        if (moveLeft || moveRight) velocity.x = direction.x * currentSpeed;
-
-        // Store current position before movement
-        const previousPosition = camera.position.clone();
-
-        // Update position
-        controls.moveRight(velocity.x * 0.1);
-        controls.moveForward(velocity.z * 0.1);
-
-        // Collision detection parameters
-        const playerRadius = 0.3;
-        const wallPadding = playerRadius + MUSEUM.wallThickness / 2;
-
-        // Main walls collision
-        let collision = false;
-
-        // Outer walls collision
-        if (camera.position.x < -MUSEUM.width/2 + wallPadding || 
-            camera.position.x > MUSEUM.width/2 - wallPadding || 
-            camera.position.z < -MUSEUM.depth/2 + wallPadding || 
-            camera.position.z > MUSEUM.depth/2 - wallPadding) {
-            collision = true;
+    if (renderer.xr.isPresenting) {
+        // VR Movement
+        if (vrMoveForward) {
+            camera.position.z -= vrSpeed * 0.01;
         }
+        if (vrMoveBackward) {
+            camera.position.z += vrSpeed * 0.01;
+        }
+        if (vrMoveLeft) {
+            camera.position.x -= vrSpeed * 0.01;
+        }
+        if (vrMoveRight) {
+            camera.position.x += vrSpeed * 0.01;
+        }
+    } else {
+        if (controls.isLocked) {
+            // Calculate movement
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize();
 
-        // Front entrance walls collision
-        if (camera.position.z > MUSEUM.depth/2 - wallPadding) {
-            // Left entrance wall
-            if (camera.position.x < -MUSEUM.width/6) {
+            // Apply movement with sprint multiplier
+            const currentSpeed = isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
+            
+            if (moveForward || moveBackward) velocity.z = direction.z * currentSpeed;
+            if (moveLeft || moveRight) velocity.x = direction.x * currentSpeed;
+
+            // Store current position before movement
+            const previousPosition = camera.position.clone();
+
+            // Update position
+            controls.moveRight(velocity.x * 0.1);
+            controls.moveForward(velocity.z * 0.1);
+
+            // Collision detection parameters
+            const playerRadius = 0.3;
+            const wallPadding = playerRadius + MUSEUM.wallThickness / 2;
+
+            // Main walls collision
+            let collision = false;
+
+            // Outer walls collision
+            if (camera.position.x < -MUSEUM.width/2 + wallPadding || 
+                camera.position.x > MUSEUM.width/2 - wallPadding || 
+                camera.position.z < -MUSEUM.depth/2 + wallPadding || 
+                camera.position.z > MUSEUM.depth/2 - wallPadding) {
                 collision = true;
             }
-            // Right entrance wall
-            if (camera.position.x > MUSEUM.width/6) {
-                collision = true;
+
+            // Front entrance walls collision
+            if (camera.position.z > MUSEUM.depth/2 - wallPadding) {
+                // Left entrance wall
+                if (camera.position.x < -MUSEUM.width/6) {
+                    collision = true;
+                }
+                // Right entrance wall
+                if (camera.position.x > MUSEUM.width/6) {
+                    collision = true;
+                }
             }
-        }
 
-        // Interior walls collision
-        const shortWallHalfLength = INTERIOR_WALL_LENGTH *.6 / 2; // Updated for shorter parallel walls
-        const perpWallHalfLength = INTERIOR_WALL_LENGTH / 4 ; // Updated for shorter perpendicular walls
+            // Interior walls collision
+            const shortWallHalfLength = INTERIOR_WALL_LENGTH *.6 / 2; // Updated for shorter parallel walls
+            const perpWallHalfLength = INTERIOR_WALL_LENGTH / 4 ; // Updated for shorter perpendicular walls
 
-        // Left parallel wall (shortWall1)
-        // if (Math.abs(camera.position.x + MUSEUM.width/4) < wallPadding &&
-        //     Math.abs(camera.position.z - (-MUSEUM.depth/4 +4 )) < shortWallHalfLength) {
-        //     collision = true;
-        // }
+            // Left parallel wall (shortWall1)
+            // if (Math.abs(camera.position.x + MUSEUM.width/4) < wallPadding &&
+            //     Math.abs(camera.position.z - (-MUSEUM.depth/4 +4 )) < shortWallHalfLength) {
+            //     collision = true;
+            // }
 
-        // Right parallel wall (shortWall2)
-        // if (Math.abs(camera.position.x - MUSEUM.width/2-5) < wallPadding &&
-        //     Math.abs(camera.position.z - (-MUSEUM.depth/4-5 )) < shortWallHalfLength) {
-        //     collision = true;
-        // }
+            // Right parallel wall (shortWall2)
+            // if (Math.abs(camera.position.x - MUSEUM.width/2-5) < wallPadding &&
+            //     Math.abs(camera.position.z - (-MUSEUM.depth/4-5 )) < shortWallHalfLength) {
+            //     collision = true;
+            // }
 
-        // // Left perpendicular wall (shortWall3)
-        // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 +8)) < wallPadding &&
-        //     Math.abs(camera.position.x + MUSEUM.width/5) < perpWallHalfLength) {
-        //     collision = true;
-        // }
+            // // Left perpendicular wall (shortWall3)
+            // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 +8)) < wallPadding &&
+            //     Math.abs(camera.position.x + MUSEUM.width/5) < perpWallHalfLength) {
+            //     collision = true;
+            // }
 
-        // // Right perpendicular wall (shortWall4)
-        // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 + 8)) < wallPadding &&
-        //     Math.abs(camera.position.x - MUSEUM.width/5) < perpWallHalfLength) {
-        //     collision = true;
-        // }
+            // // Right perpendicular wall (shortWall4)
+            // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 + 8)) < wallPadding &&
+            //     Math.abs(camera.position.x - MUSEUM.width/5) < perpWallHalfLength) {
+            //     collision = true;
+            // }
 
-        // If collision detected, restore previous position
-        if (collision) {
-            camera.position.copy(previousPosition);
-        }
+            // If collision detected, restore previous position
+            if (collision) {
+                camera.position.copy(previousPosition);
+            }
 
-        // Apply friction
-        velocity.x *= 0.8;
-        velocity.z *= 0.8;
+            // Apply friction
+            velocity.x *= 0.8;
+            velocity.z *= 0.8;
 
-        // Check proximity to video frame and update controls visibility
-        if (isNearVideoFrame()) {
-            videoControls.style.display = 'block';
-        } else {
-            videoControls.style.display = 'none';
+            // Check proximity to video frame and update controls visibility
+            if (isNearVideoFrame()) {
+                videoControls.style.display = 'block';
+            } else {
+                videoControls.style.display = 'none';
+            }
         }
     }
 
@@ -1329,3 +1346,63 @@ startButton.addEventListener('click', () => {
     controls.lock(); // Lock the screen
     instructions.style.display = 'none'; // Hide the instructions
 })
+
+// Add after renderer setup
+const controllerModelFactory = new XRControllerModelFactory();
+
+// Create controllers
+const controller1 = renderer.xr.getController(0); // Left controller
+const controller2 = renderer.xr.getController(1); // Right controller
+
+// Add controller models
+const controllerGrip1 = renderer.xr.getControllerGrip(0);
+const controllerGrip2 = renderer.xr.getControllerGrip(1);
+
+controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
+controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
+
+scene.add(controllerGrip1);
+scene.add(controllerGrip2);
+
+// Movement variables for VR
+let vrMoveForward = false;
+let vrMoveBackward = false;
+let vrMoveLeft = false;
+let vrMoveRight = false;
+const vrSpeed = 2.0;
+
+// Handle VR controller input
+controller1.addEventListener('squeezestart', () => {
+    vrMoveForward = true;
+});
+
+controller1.addEventListener('squeezeend', () => {
+    vrMoveForward = false;
+});
+
+controller2.addEventListener('squeezestart', () => {
+    vrMoveBackward = true;
+});
+
+controller2.addEventListener('squeezeend', () => {
+    vrMoveBackward = false;
+});
+
+// Add thumbstick movement
+controller1.addEventListener('thumbstickmoved', (event) => {
+    const x = event.axes[0];
+    const y = event.axes[1];
+    
+    vrMoveLeft = x < -0.5;
+    vrMoveRight = x > 0.5;
+    vrMoveForward = y > 0.5;
+    vrMoveBackward = y < -0.5;
+});
+
+controller2.addEventListener('thumbstickmoved', (event) => {
+    const x = event.axes[0];
+    const y = event.axes[1];
+    
+    // You can use the right controller for different movement or actions
+    // For example, rotation or strafing
+});
