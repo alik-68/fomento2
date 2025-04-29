@@ -902,17 +902,28 @@ function render() {
         // VR Movement
         const moveSpeed = vrSpeed * 0.01;
         
+        // Get the camera's forward and right vectors
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        
+        // Reset Y component to keep movement on the ground plane
+        forward.y = 0;
+        right.y = 0;
+        forward.normalize();
+        right.normalize();
+        
+        // Apply movement
         if (vrMoveForward) {
-            camera.position.z -= moveSpeed;
+            camera.position.add(forward.multiplyScalar(moveSpeed));
         }
         if (vrMoveBackward) {
-            camera.position.z += moveSpeed;
+            camera.position.add(forward.multiplyScalar(-moveSpeed));
         }
         if (vrMoveLeft) {
-            camera.position.x -= moveSpeed;
+            camera.position.add(right.multiplyScalar(-moveSpeed));
         }
         if (vrMoveRight) {
-            camera.position.x += moveSpeed;
+            camera.position.add(right.multiplyScalar(moveSpeed));
         }
     } else {
         if (controls.isLocked) {
@@ -1415,26 +1426,33 @@ controller2.addEventListener('squeezeend', () => {
     vrMoveBackward = false;
 });
 
-// Add thumbstick movement with proper joystick configuration
+// Add thumbstick movement with direct joystick control
 controller1.addEventListener('thumbstickmoved', (event) => {
     const x = event.axes[0];
     const y = event.axes[1];
     
-    // Deadzone for joystick to prevent drift
-    const deadzone = 0.1;
-    
-    // Only register movement if joystick is moved beyond deadzone
-    if (Math.abs(x) > deadzone) {
-        vrMoveLeft = x < -0.5;
-        vrMoveRight = x > 0.5;
+    // Direct joystick movement
+    if (Math.abs(x) > 0.1) {
+        if (x < 0) {
+            vrMoveLeft = true;
+            vrMoveRight = false;
+        } else {
+            vrMoveLeft = false;
+            vrMoveRight = true;
+        }
     } else {
         vrMoveLeft = false;
         vrMoveRight = false;
     }
     
-    if (Math.abs(y) > deadzone) {
-        vrMoveForward = y > 0.5;
-        vrMoveBackward = y < -0.5;
+    if (Math.abs(y) > 0.1) {
+        if (y < 0) {
+            vrMoveForward = false;
+            vrMoveBackward = true;
+        } else {
+            vrMoveForward = true;
+            vrMoveBackward = false;
+        }
     } else {
         vrMoveForward = false;
         vrMoveBackward = false;
