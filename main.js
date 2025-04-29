@@ -1358,11 +1358,36 @@ const controller2 = renderer.xr.getController(1); // Right controller
 const controllerGrip1 = renderer.xr.getControllerGrip(0);
 const controllerGrip2 = renderer.xr.getControllerGrip(1);
 
+// Add controller models to the scene
 controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
 controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
 
 scene.add(controllerGrip1);
 scene.add(controllerGrip2);
+
+// Add controller rays for pointing
+const controllerRay1 = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -1)
+    ]),
+    new THREE.LineBasicMaterial({ color: 0xffffff })
+);
+controllerRay1.scale.z = 5;
+controller1.add(controllerRay1);
+
+const controllerRay2 = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -1)
+    ]),
+    new THREE.LineBasicMaterial({ color: 0xffffff })
+);
+controllerRay2.scale.z = 5;
+controller2.add(controllerRay2);
+
+scene.add(controller1);
+scene.add(controller2);
 
 // Movement variables for VR
 let vrMoveForward = false;
@@ -1399,10 +1424,33 @@ controller1.addEventListener('thumbstickmoved', (event) => {
     vrMoveBackward = y < -0.5;
 });
 
-controller2.addEventListener('thumbstickmoved', (event) => {
-    const x = event.axes[0];
-    const y = event.axes[1];
+// Add trigger functionality for right controller
+controller2.addEventListener('selectstart', () => {
+    // Check if controller ray intersects with any interactive objects
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), controller2);
     
-    // You can use the right controller for different movement or actions
-    // For example, rotation or strafing
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    if (intersects.length > 0) {
+        const object = intersects[0].object;
+        // Handle interaction with the object
+        console.log('Interacting with:', object);
+    }
+});
+
+// Add haptic feedback
+function triggerHapticPulse(controller, intensity, duration) {
+    if (controller.gamepad && controller.gamepad.hapticActuators) {
+        controller.gamepad.hapticActuators[0].pulse(intensity, duration);
+    }
+}
+
+// Add controller button events
+controller1.addEventListener('squeezestart', () => {
+    triggerHapticPulse(controller1, 0.5, 100);
+});
+
+controller2.addEventListener('squeezestart', () => {
+    triggerHapticPulse(controller2, 0.5, 100);
 });
