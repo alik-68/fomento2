@@ -501,10 +501,10 @@ video4.addEventListener('loadeddata', () => {
 });
 
 const video5 = document.createElement('video');
-video4.style.display = 'block'; // Make it visible for testing
-video4.crossOrigin = 'anonymous';
-video4.loop = true;
-video4.muted = true;
+video5.style.display = 'block'; // Make it visible for testing
+video5.crossOrigin = 'anonymous';
+video5.loop = true;
+video5.muted = true;
 document.body.appendChild(video5);
 
 video5.src = './videos/fomento-expo.mp4';
@@ -944,56 +944,52 @@ let vrMoveForward = false;
 let vrMoveBackward = false;
 let vrMoveLeft = false;
 let vrMoveRight = false;
-const vrSpeed = 2.0;
+const vrSpeed = 1;
 
 // Handle VR controller input
 controller1.addEventListener('squeezestart', () => {
+    console.log('Left controller squeeze start');
     vrMoveForward = true;
 });
 
 controller1.addEventListener('squeezeend', () => {
+    console.log('Left controller squeeze end');
     vrMoveForward = false;
 });
 
 controller2.addEventListener('squeezestart', () => {
+    console.log('Right controller squeeze start');
     vrMoveBackward = true;
 });
 
 controller2.addEventListener('squeezeend', () => {
+    console.log('Right controller squeeze end');
     vrMoveBackward = false;
 });
 
-// Add thumbstick movement with direct gamepad input
-function updateGamepad() {
-    if (renderer.xr.isPresenting) {
-        const gamepad = controller1.gamepad;
-        if (gamepad) {
-            const x = gamepad.axes[0];
-            const y = gamepad.axes[1];
-            
-            console.log('Gamepad axes:', x, y);
-            
-            // Direct joystick movement
-            vrMoveLeft = x < -0.2;
-            vrMoveRight = x > 0.2;
-            vrMoveForward = y > 0.2;
-            vrMoveBackward = y < -0.2;
-            
-            console.log('Movement state:', {
-                left: vrMoveLeft,
-                right: vrMoveRight,
-                forward: vrMoveForward,
-                backward: vrMoveBackward
-            });
-        }
-    }
-}
+// Add thumbstick movement
+controller1.addEventListener('thumbstickmoved', (event) => {
+    console.log('Thumbstick moved:', event.axes);
+    const x = event.axes[0];
+    const y = event.axes[1];
+    
+    // Simple joystick movement
+    vrMoveLeft = x < -0.2;
+    vrMoveRight = x > 0.2;
+    vrMoveForward = y > 0.2;
+    vrMoveBackward = y < -0.2;
+    
+    console.log('Movement state:', {
+        left: vrMoveLeft,
+        right: vrMoveRight,
+        forward: vrMoveForward,
+        backward: vrMoveBackward
+    });
+});
 
 // Add controller connection debugging
 controller1.addEventListener('connected', (event) => {
     console.log('Left controller connected:', event);
-    // Start checking for gamepad input
-    setInterval(updateGamepad, 100);
 });
 
 controller2.addEventListener('connected', (event) => {
@@ -1009,38 +1005,7 @@ renderer.xr.addEventListener('sessionend', () => {
     console.log('VR session ended');
 });
 
-// Add trigger functionality for right controller
-controller2.addEventListener('selectstart', () => {
-    // Check if controller ray intersects with any interactive objects
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), controller2);
-    
-    const intersects = raycaster.intersectObjects(scene.children, true);
-    
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-        // Handle interaction with the object
-        console.log('Interacting with:', object);
-    }
-});
-
-// Add haptic feedback
-function triggerHapticPulse(controller, intensity, duration) {
-    if (controller.gamepad && controller.gamepad.hapticActuators) {
-        controller.gamepad.hapticActuators[0].pulse(intensity, duration);
-    }
-}
-
-// Add controller button events
-controller1.addEventListener('squeezestart', () => {
-    triggerHapticPulse(controller1, 0.5, 100);
-});
-
-controller2.addEventListener('squeezestart', () => {
-    triggerHapticPulse(controller2, 0.5, 100);
-});
-
-// Update the render function to handle VR movement with debugging
+// Update the render function to handle VR movement
 function render() {
     if (renderer.xr.isPresenting) {
         // VR Movement
