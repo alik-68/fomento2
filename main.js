@@ -963,16 +963,42 @@ controller2.addEventListener('squeezeend', () => {
     vrMoveBackward = false;
 });
 
-// Add thumbstick movement
+// Add thumbstick movement with debugging
 controller1.addEventListener('thumbstickmoved', (event) => {
+    console.log('Thumbstick moved:', event.axes);
     const x = event.axes[0];
     const y = event.axes[1];
     
-    // Simple joystick movement
-    vrMoveLeft = x < -0.5;
-    vrMoveRight = x > 0.5;
-    vrMoveForward = y > 0.5;
-    vrMoveBackward = y < -0.5;
+    // More sensitive joystick movement
+    vrMoveLeft = x < -0.2;
+    vrMoveRight = x > 0.2;
+    vrMoveForward = y > 0.2;
+    vrMoveBackward = y < -0.2;
+    
+    console.log('Movement state:', {
+        left: vrMoveLeft,
+        right: vrMoveRight,
+        forward: vrMoveForward,
+        backward: vrMoveBackward
+    });
+});
+
+// Add controller connection debugging
+controller1.addEventListener('connected', (event) => {
+    console.log('Left controller connected:', event);
+});
+
+controller2.addEventListener('connected', (event) => {
+    console.log('Right controller connected:', event);
+});
+
+// Add VR session debugging
+renderer.xr.addEventListener('sessionstart', () => {
+    console.log('VR session started');
+});
+
+renderer.xr.addEventListener('sessionend', () => {
+    console.log('VR session ended');
 });
 
 // Add trigger functionality for right controller
@@ -1006,7 +1032,7 @@ controller2.addEventListener('squeezestart', () => {
     triggerHapticPulse(controller2, 0.5, 100);
 });
 
-// Update the render function to handle VR movement
+// Update the render function to handle VR movement with debugging
 function render() {
     if (renderer.xr.isPresenting) {
         // VR Movement
@@ -1025,15 +1051,19 @@ function render() {
         // Apply movement to the camera
         if (vrMoveForward) {
             camera.position.add(forward.multiplyScalar(moveSpeed));
+            console.log('Moving forward');
         }
         if (vrMoveBackward) {
             camera.position.add(forward.multiplyScalar(-moveSpeed));
+            console.log('Moving backward');
         }
         if (vrMoveLeft) {
             camera.position.add(right.multiplyScalar(-moveSpeed));
+            console.log('Moving left');
         }
         if (vrMoveRight) {
             camera.position.add(right.multiplyScalar(moveSpeed));
+            console.log('Moving right');
         }
     } else {
         if (controls.isLocked) {
@@ -1469,4 +1499,66 @@ startButton.addEventListener('click', () => {
     controls.lock(); // Lock the screen
     instructions.style.display = 'none'; // Hide the instructions
 })
+
+// Add keyboard controls for VR movement
+document.addEventListener('keydown', (event) => {
+    switch(event.code) {
+        case 'KeyW':
+            vrMoveForward = true;
+            console.log('W key pressed - Moving forward');
+            break;
+        case 'KeyS':
+            vrMoveBackward = true;
+            console.log('S key pressed - Moving backward');
+            break;
+        case 'KeyA':
+            vrMoveLeft = true;
+            console.log('A key pressed - Moving left');
+            break;
+        case 'KeyD':
+            vrMoveRight = true;
+            console.log('D key pressed - Moving right');
+            break;
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    switch(event.code) {
+        case 'KeyW':
+            vrMoveForward = false;
+            console.log('W key released');
+            break;
+        case 'KeyS':
+            vrMoveBackward = false;
+            console.log('S key released');
+            break;
+        case 'KeyA':
+            vrMoveLeft = false;
+            console.log('A key released');
+            break;
+        case 'KeyD':
+            vrMoveRight = false;
+            console.log('D key released');
+            break;
+    }
+});
+
+// Add instructions for keyboard controls
+const keyboardInstructions = document.createElement('div');
+keyboardInstructions.style.position = 'absolute';
+keyboardInstructions.style.bottom = '20px';
+keyboardInstructions.style.left = '20px';
+keyboardInstructions.style.color = 'white';
+keyboardInstructions.style.backgroundColor = 'rgba(0,0,0,0.5)';
+keyboardInstructions.style.padding = '10px';
+keyboardInstructions.style.borderRadius = '5px';
+keyboardInstructions.innerHTML = `
+    <h3>Movement Controls</h3>
+    <p>W: Move Forward</p>
+    <p>S: Move Backward</p>
+    <p>A: Move Left</p>
+    <p>D: Move Right</p>
+    <p>Or use VR controller joystick</p>
+`;
+document.body.appendChild(keyboardInstructions);
 
