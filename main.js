@@ -98,7 +98,7 @@ const startButton = document.getElementById('startButton');
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
     instructions.style.display = 'flex';
-    setInterval(checkGamepad, 100);
+    setInterval(checkGamepad, 50);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
@@ -948,11 +948,8 @@ scene.add(controller1);
 scene.add(controller2);
 
 // Movement variables for VR
-let vrMoveForward = false;
-let vrMoveBackward = false;
-let vrMoveLeft = false;
-let vrMoveRight = false;
-const vrSpeed = 1;
+let isMoving = false;
+const vrSpeed = 0.1;
 
 // Function to check gamepad state
 function checkGamepad() {
@@ -962,26 +959,8 @@ function checkGamepad() {
             const gamepads = navigator.getGamepads();
             for (const gamepad of gamepads) {
                 if (gamepad) {
-                    // Left controller (usually index 0)
-                    if (gamepad.id.includes('left')) {
-                        const x = gamepad.axes[0];
-                        const y = gamepad.axes[1];
-                        
-                        // Update movement state with deadzone
-                        const deadzone = 0.1;
-                        vrMoveLeft = x < -deadzone;
-                        vrMoveRight = x > deadzone;
-                        vrMoveForward = y < -deadzone;
-                        vrMoveBackward = y > deadzone;
-                        
-                        console.log('Left controller movement:', {
-                            x, y,
-                            left: vrMoveLeft,
-                            right: vrMoveRight,
-                            forward: vrMoveForward,
-                            backward: vrMoveBackward
-                        });
-                    }
+                    // Check grip button (usually button 1)
+                    isMoving = gamepad.buttons[1].pressed;
                 }
             }
         }
@@ -992,30 +971,14 @@ function checkGamepad() {
 function render() {
     if (renderer.xr.isPresenting) {
         // VR Movement
-        const moveSpeed = vrSpeed * 0.1; // Increased movement speed
-        
-        // Get the camera's forward and right vectors
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-        
-        // Reset Y component to keep movement on the ground plane
-        forward.y = 0;
-        right.y = 0;
-        forward.normalize();
-        right.normalize();
-        
-        // Apply movement to the player rig
-        if (vrMoveForward) {
-            playerRig.position.add(forward.multiplyScalar(moveSpeed));
-        }
-        if (vrMoveBackward) {
-            playerRig.position.add(forward.multiplyScalar(-moveSpeed));
-        }
-        if (vrMoveLeft) {
-            playerRig.position.add(right.multiplyScalar(-moveSpeed));
-        }
-        if (vrMoveRight) {
-            playerRig.position.add(right.multiplyScalar(moveSpeed));
+        if (isMoving) {
+            // Get the camera's forward vector
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            forward.y = 0; // Keep movement on the ground plane
+            forward.normalize();
+            
+            // Move the player rig forward
+            playerRig.position.add(forward.multiplyScalar(vrSpeed));
         }
     } else {
         if (controls.isLocked) {
@@ -1503,7 +1466,7 @@ keyboardInstructions.style.backgroundColor = 'rgba(0,0,0,0.5)';
 keyboardInstructions.style.padding = '10px';
 keyboardInstructions.style.borderRadius = '5px';
 keyboardInstructions.innerHTML = `
-    <h3>Movement Controls v5 </h3>
+    <h3>Movement Controls v6 </h3>
     <p>W: Move Forward</p>
     <p>S: Move Backward</p>
     <p>A: Move Left</p>
