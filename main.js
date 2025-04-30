@@ -950,7 +950,6 @@ scene.add(controller2);
 // Movement variables for VR
 let isMoving = false;
 const vrSpeed = 0.1;
-const joystickDeadzone = 0.1;
 
 // Function to check gamepad state
 function checkGamepad() {
@@ -960,19 +959,36 @@ function checkGamepad() {
             const gamepads = navigator.getGamepads();
             for (const gamepad of gamepads) {
                 if (gamepad) {
-                    // Get joystick values
-                    const x = gamepad.axes[0]; // Left/Right
-                    const y = gamepad.axes[1]; // Forward/Backward
-                    
-                    // Check if joystick is pushed forward beyond deadzone
-                    isMoving = y < -joystickDeadzone;
-                    
-                    console.log('Joystick position:', { x, y, isMoving });
+                    console.log('Gamepad found:', gamepad.id);
+                    // Check grip button (usually button 1)
+                    isMoving = gamepad.buttons[1].pressed;
+                    console.log('Grip button pressed:', isMoving);
                 }
             }
         }
     }
 }
+
+// Add controller event listeners
+controller1.addEventListener('squeezestart', () => {
+    console.log('Left controller squeeze start');
+    isMoving = true;
+});
+
+controller1.addEventListener('squeezeend', () => {
+    console.log('Left controller squeeze end');
+    isMoving = false;
+});
+
+controller2.addEventListener('squeezestart', () => {
+    console.log('Right controller squeeze start');
+    isMoving = true;
+});
+
+controller2.addEventListener('squeezeend', () => {
+    console.log('Right controller squeeze end');
+    isMoving = false;
+});
 
 // Update the render function to handle VR movement
 function render() {
