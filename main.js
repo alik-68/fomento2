@@ -29,7 +29,8 @@ renderer.xr.enabled = true; // Enable XR support
 document.body.appendChild(renderer.domElement);
 
 // Create a VR button
-document.body.appendChild(VRButton.createButton(renderer)); // Add VR button
+const vrButton = VRButton.createButton(renderer);
+document.body.appendChild(vrButton);
 
 // First Person Controls Setup
 const controls = new PointerLockControls(camera, document.body);
@@ -101,9 +102,28 @@ startButton.addEventListener('click', () => {
     }
 });
 
+// VR session event listeners
+renderer.xr.addEventListener('sessionstart', () => {
+    console.log('VR session started');
+    // Show instructions in VR mode
+    instructions.style.display = 'flex';
+    // Start checking gamepad state
+    setInterval(checkGamepad, 100);
+});
+
+renderer.xr.addEventListener('sessionend', () => {
+    console.log('VR session ended');
+    // Show instructions when exiting VR if not in pointer lock
+    if (!controls.isLocked) {
+        instructions.style.display = 'flex';
+    }
+});
+
 // Handle pointer lock state changes
 controls.addEventListener('lock', () => {
-    instructions.style.display = 'none';
+    if (!renderer.xr.isPresenting) {
+        instructions.style.display = 'none';
+    }
     speedControls.style.display = 'none';
     if (errorMessage) {
         errorMessage.style.display = 'none';
@@ -111,8 +131,10 @@ controls.addEventListener('lock', () => {
 });
 
 controls.addEventListener('unlock', () => {
-    instructions.style.display = 'flex'; // Show instructions again if unlocked
-    speedControls.style.display = 'block'; // Show speed controls if needed
+    if (!renderer.xr.isPresenting) {
+        instructions.style.display = 'flex';
+    }
+    speedControls.style.display = 'block';
 });
 
 // Handle pointer lock errors
@@ -992,9 +1014,8 @@ function checkGamepad() {
 // Add VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
-    // Force show instructions in VR mode
+    // Show instructions in VR mode
     instructions.style.display = 'flex';
-    instructions.style.pointerEvents = 'auto'; // Ensure click events work
     // Start checking gamepad state
     setInterval(checkGamepad, 100);
 });
