@@ -48,7 +48,7 @@ const sprintMultiplier = 1.5; // Reduced sprint multiplier
 
 // Add instructions overlay
 const instructions = document.createElement('div');
-instructions.style.position = 'absolute';
+instructions.style.position = 'fixed';
 instructions.style.width = '100%';
 instructions.style.height = '100%';
 instructions.style.top = '0';
@@ -60,6 +60,7 @@ instructions.style.alignItems = 'center';
 instructions.style.color = '#ffffff';
 instructions.style.backgroundColor = 'rgba(0, 0, 0, 0.41)';
 instructions.style.textAlign = 'center';
+instructions.style.zIndex = '9999';
 instructions.innerHTML = `
     <div style="padding: 20px; background: rgba(0,0,0,0.7); border-radius: 10px;">
         <h1 style="margin: 0 0 20px 0;">Welcome to Cafe Fomento </h1>
@@ -991,18 +992,45 @@ function checkGamepad() {
 // Add VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
-    // Show instructions in VR mode
+    // Force show instructions in VR mode
     instructions.style.display = 'flex';
+    instructions.style.pointerEvents = 'auto'; // Ensure click events work
     // Start checking gamepad state
     setInterval(checkGamepad, 100);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
     console.log('VR session ended');
-    // Hide instructions when exiting VR
+    // Show instructions when exiting VR if not in pointer lock
     if (!controls.isLocked) {
         instructions.style.display = 'flex';
     }
+});
+
+// Modify the start button click handler
+startButton.addEventListener('click', () => {
+    if (renderer.xr.isPresenting) {
+        // In VR mode, just hide instructions
+        instructions.style.display = 'none';
+    } else {
+        // In non-VR mode, use pointer lock
+        controls.lock();
+        instructions.style.display = 'none';
+    }
+});
+
+// Remove the controls lock/unlock event listeners that affect instructions
+controls.removeEventListener('lock', () => {
+    instructions.style.display = 'none';
+    speedControls.style.display = 'none';
+    if (errorMessage) {
+        errorMessage.style.display = 'none';
+    }
+});
+
+controls.removeEventListener('unlock', () => {
+    instructions.style.display = 'flex';
+    speedControls.style.display = 'block';
 });
 
 // Update the render function to handle VR movement
@@ -1532,7 +1560,7 @@ keyboardInstructions.style.backgroundColor = 'rgba(0,0,0,0.5)';
 keyboardInstructions.style.padding = '10px';
 keyboardInstructions.style.borderRadius = '5px';
 keyboardInstructions.innerHTML = `
-    <h3>Movement Controls</h3>
+    <h3>Movement Controls v3 </h3>
     <p>W: Move Forward</p>
     <p>S: Move Backward</p>
     <p>A: Move Left</p>
