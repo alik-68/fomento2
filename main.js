@@ -65,7 +65,7 @@ instructions.style.alignItems = 'center';
 instructions.style.color = '#ffffff';
 instructions.style.backgroundColor = 'rgba(0, 0, 0, 0.41)';
 instructions.style.textAlign = 'center';
-instructions.style.zIndex = '9999';
+instructions.style.zIndex = '1'; // Lower z-index for instructions
 instructions.innerHTML = `
     <div style="padding: 20px; background: rgba(0,0,0,0.7); border-radius: 10px;">
         <h1 style="margin: 0 0 20px 0;">Welcome to Cafe Fomento </h1>
@@ -147,6 +147,7 @@ speedControls.style.padding = '10px';
 speedControls.style.borderRadius = '5px';
 speedControls.style.color = '#ffffff';
 speedControls.style.textAlign = 'center';
+speedControls.style.zIndex = '2'; // Lower z-index for speed controls
 speedControls.innerHTML = `
     <div>
         <label for="speedSlider">Walking Speed: <span id="speedValue">2.0</span></label><br>
@@ -958,22 +959,20 @@ function checkGamepad() {
     if (renderer.xr.isPresenting) {
         const session = renderer.xr.getSession();
         if (session) {
-            const gamepads = session.inputSources;
+            const gamepads = navigator.getGamepads();
             for (const gamepad of gamepads) {
-                if (gamepad.gamepad) {
-                    const axes = gamepad.gamepad.axes;
-                    console.log('Gamepad axes:', axes);
-                    
+                if (gamepad) {
                     // Left controller (usually index 0)
-                    if (gamepad.handedness === 'left') {
-                        const x = axes[0];
-                        const y = axes[1];
+                    if (gamepad.id.includes('left')) {
+                        const x = gamepad.axes[0];
+                        const y = gamepad.axes[1];
                         
-                        // Update movement state
-                        vrMoveLeft = x < -0.2;
-                        vrMoveRight = x > 0.2;
-                        vrMoveForward = y > 0.2;
-                        vrMoveBackward = y < -0.2;
+                        // Update movement state with deadzone
+                        const deadzone = 0.1;
+                        vrMoveLeft = x < -deadzone;
+                        vrMoveRight = x > deadzone;
+                        vrMoveForward = y < -deadzone;
+                        vrMoveBackward = y > deadzone;
                         
                         console.log('Left controller movement:', {
                             x, y,
@@ -989,49 +988,11 @@ function checkGamepad() {
     }
 }
 
-// Add VR session event listeners
-renderer.xr.addEventListener('sessionstart', () => {
-    console.log('VR session started');
-    instructions.style.display = 'flex';
-    setInterval(checkGamepad, 100);
-});
-
-renderer.xr.addEventListener('sessionend', () => {
-    console.log('VR session ended');
-    if (!controls.isLocked) {
-        instructions.style.display = 'flex';
-    }
-});
-
-// Modify the start button click handler
-startButton.addEventListener('click', () => {
-    if (renderer.xr.isPresenting) {
-        instructions.style.display = 'none';
-    } else {
-        controls.lock();
-        instructions.style.display = 'none';
-    }
-});
-
-// Remove the controls lock/unlock event listeners that affect instructions
-controls.removeEventListener('lock', () => {
-    instructions.style.display = 'none';
-    speedControls.style.display = 'none';
-    if (errorMessage) {
-        errorMessage.style.display = 'none';
-    }
-});
-
-controls.removeEventListener('unlock', () => {
-    instructions.style.display = 'flex';
-    speedControls.style.display = 'block';
-});
-
 // Update the render function to handle VR movement
 function render() {
     if (renderer.xr.isPresenting) {
         // VR Movement
-        const moveSpeed = vrSpeed * 0.01;
+        const moveSpeed = vrSpeed * 0.1; // Increased movement speed
         
         // Get the camera's forward and right vectors
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -1043,7 +1004,7 @@ function render() {
         forward.normalize();
         right.normalize();
         
-        // Apply movement to the player rig instead of camera
+        // Apply movement to the player rig
         if (vrMoveForward) {
             playerRig.position.add(forward.multiplyScalar(moveSpeed));
         }
@@ -1333,49 +1294,41 @@ function createFrameSpotlight(position, targetPosition) {
 
 // Create an iframe element
 const iframe = document.createElement('iframe');
-iframe.style.width = '80%'; // Set width of the iframe
-iframe.style.height = '80%'; // Set height of the iframe
-iframe.style.position = 'fixed'; // Fixed position
-iframe.style.top = '10%'; // Position from the top
-iframe.style.left = '10%'; // Position from the left
-iframe.style.zIndex = '1000'; // Ensure it appears above other content
-iframe.style.border = 'none'; // Remove border
-iframe.style.display = 'none'; // Initially hidden
-
-// Append the iframe to the body
+iframe.style.width = '80%';
+iframe.style.height = '80%';
+iframe.style.position = 'fixed';
+iframe.style.top = '10%';
+iframe.style.left = '10%';
+iframe.style.zIndex = '1000'; // Higher z-index for iframe
+iframe.style.border = 'none';
+iframe.style.display = 'none';
 document.body.appendChild(iframe);
 
-// ... existing iframe code ...
-
 // Create close button
-let closeButton; 
-
+let closeButton;
 function showcCloseButton() {
     if (!closeButton) {
         closeButton = document.createElement('button');
-        closeButton.textContent = 'X'; // Set button text
-        closeButton.style.position = 'absolute'; // Position it absolutely
-        closeButton.style.top = '5%'; // Position from the top
-        closeButton.style.right = '5%'; // Position from the right
-        closeButton.style.zIndex = '1001'; // Ensure it appears above the iframe
-        closeButton.style.fontSize = '20px'; // Adjust font size
-        closeButton.style.backgroundColor = 'red'; // Background color
-        closeButton.style.color = 'white'; // Text color
-        closeButton.style.border = 'none'; // Remove border
-        closeButton.style.cursor = 'pointer'; // Change cursor on hover
-        closeButton.style.padding = '5px 10px'; // Add some padding
-        closeButton.style.borderRadius = '5px'; // Rounded corners
-
-        // Append the close button to the body
+        closeButton.textContent = 'X';
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '5%';
+        closeButton.style.right = '5%';
+        closeButton.style.zIndex = '1001'; // Higher z-index for close button
+        closeButton.style.fontSize = '20px';
+        closeButton.style.backgroundColor = 'red';
+        closeButton.style.color = 'white';
+        closeButton.style.border = 'none';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.padding = '5px 10px';
+        closeButton.style.borderRadius = '5px';
         document.body.appendChild(closeButton);
 
-        // Add event listener to close the iframe
         closeButton.addEventListener('click', () => {
-            iframe.style.display = 'none'; // Hide the iframe
-            closeButton.style.display = 'none'; // Hide the close button
+            iframe.style.display = 'none';
+            closeButton.style.display = 'none';
         });
     } else {
-        closeButton.style.display = 'block'; // Show the button again if it already exists
+        closeButton.style.display = 'block';
     }
 }
 
