@@ -20,6 +20,11 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 camera.position.set(0, 3, MUSEUM.depth / 2 - 2); // Position at entrance, human height
 camera.lookAt(0, 1.7, 0);
 
+// Create player rig
+const playerRig = new THREE.Group();
+playerRig.add(camera);
+scene.add(playerRig);
+
 // Create renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -29,8 +34,7 @@ renderer.xr.enabled = true; // Enable XR support
 document.body.appendChild(renderer.domElement);
 
 // Create a VR button
-const vrButton = VRButton.createButton(renderer);
-document.body.appendChild(vrButton);
+document.body.appendChild(VRButton.createButton(renderer));
 
 // First Person Controls Setup
 const controls = new PointerLockControls(camera, document.body);
@@ -90,30 +94,15 @@ const errorMessage = document.getElementById('error-message');
 // Get the start button element
 const startButton = document.getElementById('startButton');
 
-// Add event listener to the start button
-startButton.addEventListener('click', () => {
-    if (renderer.xr.isPresenting) {
-        // In VR mode, just hide instructions
-        instructions.style.display = 'none';
-    } else {
-        // In non-VR mode, use pointer lock
-        controls.lock();
-        instructions.style.display = 'none';
-    }
-});
-
 // VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
-    // Show instructions in VR mode
     instructions.style.display = 'flex';
-    // Start checking gamepad state
     setInterval(checkGamepad, 100);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
     console.log('VR session ended');
-    // Show instructions when exiting VR if not in pointer lock
     if (!controls.isLocked) {
         instructions.style.display = 'flex';
     }
@@ -137,11 +126,13 @@ controls.addEventListener('unlock', () => {
     speedControls.style.display = 'block';
 });
 
-// Handle pointer lock errors
-document.addEventListener('pointerlockerror', (event) => {
-    console.error('Pointer lock error:', event);
-    if (errorMessage) {
-        errorMessage.style.display = 'block';
+// Start button click handler
+startButton.addEventListener('click', () => {
+    if (renderer.xr.isPresenting) {
+        instructions.style.display = 'none';
+    } else {
+        controls.lock();
+        instructions.style.display = 'none';
     }
 });
 
@@ -172,19 +163,6 @@ speedSlider.addEventListener('input', (e) => {
     baseSpeed = parseFloat(e.target.value);
     speedValue.textContent = baseSpeed.toFixed(1);
 });
-
-// Function to toggle video play/pause
-function toggleVideo() {
-    if (video.paused) {
-        video.play();
-        playPauseBtn.textContent = 'Pause';
-        videoStatus.textContent = 'Playing';
-    } else {
-        video.pause();
-        playPauseBtn.textContent = 'Play';
-        videoStatus.textContent = 'Paused';
-    }
-}
 
 // Keyboard controls
 const onKeyDown = function(event) {
@@ -1014,15 +992,12 @@ function checkGamepad() {
 // Add VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
-    // Show instructions in VR mode
     instructions.style.display = 'flex';
-    // Start checking gamepad state
     setInterval(checkGamepad, 100);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
     console.log('VR session ended');
-    // Show instructions when exiting VR if not in pointer lock
     if (!controls.isLocked) {
         instructions.style.display = 'flex';
     }
@@ -1031,10 +1006,8 @@ renderer.xr.addEventListener('sessionend', () => {
 // Modify the start button click handler
 startButton.addEventListener('click', () => {
     if (renderer.xr.isPresenting) {
-        // In VR mode, just hide instructions
         instructions.style.display = 'none';
     } else {
-        // In non-VR mode, use pointer lock
         controls.lock();
         instructions.style.display = 'none';
     }
@@ -1070,22 +1043,18 @@ function render() {
         forward.normalize();
         right.normalize();
         
-        // Apply movement to the camera
+        // Apply movement to the player rig instead of camera
         if (vrMoveForward) {
-            camera.position.add(forward.multiplyScalar(moveSpeed));
-            console.log('Moving forward');
+            playerRig.position.add(forward.multiplyScalar(moveSpeed));
         }
         if (vrMoveBackward) {
-            camera.position.add(forward.multiplyScalar(-moveSpeed));
-            console.log('Moving backward');
+            playerRig.position.add(forward.multiplyScalar(-moveSpeed));
         }
         if (vrMoveLeft) {
-            camera.position.add(right.multiplyScalar(-moveSpeed));
-            console.log('Moving left');
+            playerRig.position.add(right.multiplyScalar(-moveSpeed));
         }
         if (vrMoveRight) {
-            camera.position.add(right.multiplyScalar(moveSpeed));
-            console.log('Moving right');
+            playerRig.position.add(right.multiplyScalar(moveSpeed));
         }
     } else {
         if (controls.isLocked) {
@@ -1101,7 +1070,7 @@ function render() {
             if (moveLeft || moveRight) velocity.x = direction.x * currentSpeed;
 
             // Store current position before movement
-            const previousPosition = camera.position.clone();
+            const previousPosition = playerRig.position.clone();
 
             // Update position
             controls.moveRight(velocity.x * 0.1);
@@ -1115,21 +1084,21 @@ function render() {
             let collision = false;
 
             // Outer walls collision
-            if (camera.position.x < -MUSEUM.width/2 + wallPadding || 
-                camera.position.x > MUSEUM.width/2 - wallPadding || 
-                camera.position.z < -MUSEUM.depth/2 + wallPadding || 
-                camera.position.z > MUSEUM.depth/2 - wallPadding) {
+            if (playerRig.position.x < -MUSEUM.width/2 + wallPadding || 
+                playerRig.position.x > MUSEUM.width/2 - wallPadding || 
+                playerRig.position.z < -MUSEUM.depth/2 + wallPadding || 
+                playerRig.position.z > MUSEUM.depth/2 - wallPadding) {
                 collision = true;
             }
 
             // Front entrance walls collision
-            if (camera.position.z > MUSEUM.depth/2 - wallPadding) {
+            if (playerRig.position.z > MUSEUM.depth/2 - wallPadding) {
                 // Left entrance wall
-                if (camera.position.x < -MUSEUM.width/6) {
+                if (playerRig.position.x < -MUSEUM.width/6) {
                     collision = true;
                 }
                 // Right entrance wall
-                if (camera.position.x > MUSEUM.width/6) {
+                if (playerRig.position.x > MUSEUM.width/6) {
                     collision = true;
                 }
             }
@@ -1139,32 +1108,32 @@ function render() {
             const perpWallHalfLength = INTERIOR_WALL_LENGTH / 4 ; // Updated for shorter perpendicular walls
 
             // Left parallel wall (shortWall1)
-            // if (Math.abs(camera.position.x + MUSEUM.width/4) < wallPadding &&
-            //     Math.abs(camera.position.z - (-MUSEUM.depth/4 +4 )) < shortWallHalfLength) {
+            // if (Math.abs(playerRig.position.x + MUSEUM.width/4) < wallPadding &&
+            //     Math.abs(playerRig.position.z - (-MUSEUM.depth/4 +4 )) < shortWallHalfLength) {
             //     collision = true;
             // }
 
             // Right parallel wall (shortWall2)
-            // if (Math.abs(camera.position.x - MUSEUM.width/2-5) < wallPadding &&
-            //     Math.abs(camera.position.z - (-MUSEUM.depth/4-5 )) < shortWallHalfLength) {
+            // if (Math.abs(playerRig.position.x - MUSEUM.width/2-5) < wallPadding &&
+            //     Math.abs(playerRig.position.z - (-MUSEUM.depth/4-5 )) < shortWallHalfLength) {
             //     collision = true;
             // }
 
             // // Left perpendicular wall (shortWall3)
-            // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 +8)) < wallPadding &&
-            //     Math.abs(camera.position.x + MUSEUM.width/5) < perpWallHalfLength) {
+            // if (Math.abs(playerRig.position.z - (-MUSEUM.depth/4 +8)) < wallPadding &&
+            //     Math.abs(playerRig.position.x + MUSEUM.width/5) < perpWallHalfLength) {
             //     collision = true;
             // }
 
             // // Right perpendicular wall (shortWall4)
-            // if (Math.abs(camera.position.z - (-MUSEUM.depth/4 + 8)) < wallPadding &&
-            //     Math.abs(camera.position.x - MUSEUM.width/5) < perpWallHalfLength) {
+            // if (Math.abs(playerRig.position.z - (-MUSEUM.depth/4 + 8)) < wallPadding &&
+            //     Math.abs(playerRig.position.x - MUSEUM.width/5) < perpWallHalfLength) {
             //     collision = true;
             // }
 
             // If collision detected, restore previous position
             if (collision) {
-                camera.position.copy(previousPosition);
+                playerRig.position.copy(previousPosition);
             }
 
             // Apply friction
@@ -1581,7 +1550,7 @@ keyboardInstructions.style.backgroundColor = 'rgba(0,0,0,0.5)';
 keyboardInstructions.style.padding = '10px';
 keyboardInstructions.style.borderRadius = '5px';
 keyboardInstructions.innerHTML = `
-    <h3>Movement Controls v3 </h3>
+    <h3>Movement Controls v4 </h3>
     <p>W: Move Forward</p>
     <p>S: Move Backward</p>
     <p>A: Move Left</p>
