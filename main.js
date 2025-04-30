@@ -90,8 +90,14 @@ const startButton = document.getElementById('startButton');
 
 // Add event listener to the start button
 startButton.addEventListener('click', () => {
-    controls.lock(); // Lock the screen
-    instructions.style.display = 'none'; // Hide the instructions
+    if (renderer.xr.isPresenting) {
+        // In VR mode, just hide instructions
+        instructions.style.display = 'none';
+    } else {
+        // In non-VR mode, use pointer lock
+        controls.lock();
+        instructions.style.display = 'none';
+    }
 });
 
 // Handle pointer lock state changes
@@ -985,12 +991,18 @@ function checkGamepad() {
 // Add VR session event listeners
 renderer.xr.addEventListener('sessionstart', () => {
     console.log('VR session started');
+    // Show instructions in VR mode
+    instructions.style.display = 'flex';
     // Start checking gamepad state
     setInterval(checkGamepad, 100);
 });
 
 renderer.xr.addEventListener('sessionend', () => {
     console.log('VR session ended');
+    // Hide instructions when exiting VR
+    if (!controls.isLocked) {
+        instructions.style.display = 'flex';
+    }
 });
 
 // Update the render function to handle VR movement
@@ -1457,9 +1469,15 @@ function showInfoDialog() {
 
 // Add event listener to the start button
 startButton.addEventListener('click', () => {
-    controls.lock(); // Lock the screen
-    instructions.style.display = 'none'; // Hide the instructions
-})
+    if (renderer.xr.isPresenting) {
+        // In VR mode, just hide instructions
+        instructions.style.display = 'none';
+    } else {
+        // In non-VR mode, use pointer lock
+        controls.lock();
+        instructions.style.display = 'none';
+    }
+});
 
 // Add keyboard controls for VR movement
 document.addEventListener('keydown', (event) => {
